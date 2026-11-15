@@ -1,0 +1,512 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "AWS CloudFormation Template to pipeline and build werewolf project"
+Parameters:
+# always in input parameters:
+  ProjectName:
+    Description: The name of the project.
+    Type: String
+    Default: werewolf
+# with defaults:
+  WerewolfCodePipelineName:
+    Type: String
+    Description: Name of the AWS CodePipeline pipeline to be created
+    Default: werewolf-pipeline  
+  CodePipelineBucketPrefix:
+    Description: The name of the Code Pipeline bucket for werewolf project
+    Type: String
+    Default: werewolf-pipeline
+  WerewolfResourceStack:
+    Description: Stack name for the initial resources stack
+    Type: String
+    Default: werewolf-bvv-cf-resource
+  WerewolfResourceStackParameterFilePath:
+    Description: Path to the file with parameters to update werewolf resource stack, in the CodePipeline template configuration format (a Parameters object)
+    Type: String
+    Default: iac/awscloud/parameter/werewolf_resource_pipeline_parameter.json
+  WerewolfResourceTemplateFilePath:
+    Description: Path to the file with the werewolf resource stack template
+    Type: String
+    Default: iac/awscloud/template/WerewolfResourceTemplate.yaml
+  GoModuleDir:
+    Description: Folder (relative to the repo root) containing go.mod
+    Type: String
+    Default: bus
+  GoMainPackage:
+    Description: Main package to compile, relative to GoModuleDir
+    Type: String
+    Default: ./cmd/cloud
+  GoArch:
+    Description: Target architecture of the EC2 instance (amd64 for t2/t3, arm64 for t4g)
+    Type: String
+    Default: amd64
+    AllowedValues:
+      - amd64
+      - arm64
+  WerewolfBuildSpecPath:
+    Description: Path to the buildspec file in the repo
+    Type: String
+    Default: iac/awscloud/deploy/buildspec.yml
+  WerewolfCodeDeployApplicationName:
+    Description: Name of the CodeDeploy application
+    Type: String
+    Default: werewolf-cp
+  BranchName:
+    Description: Name for repositorygit branch to start pipeline
+    Type: String
+    Default: main
+  EC2PurposeTagValue:
+    Description: Purpose tag value to select EC2 instance for deploy
+    Type: String
+    Default: control-panel
+# no defaults:
+  GithubFullRepositoryId:
+    Type: String
+    Description: github repository the pipeline pulls from, as owner/name
+
+Resources:
+  # Created in PENDING state: authorize it once in the console (Developer Tools > Settings > Connections)
+  GithubConnection:
+    Type: AWS::CodeStarConnections::Connection
+    Properties:
+      ConnectionName: !Sub "${ProjectName}-github"
+      ProviderType: GitHub
+
+  CodePipelineArtifactStoreS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join
+        - "-"
+        - - !Ref CodePipelineBucketPrefix
+          - !Ref AWS::AccountId
+          - !Ref AWS::Region
+          - "bucket"
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref AWS::StackId
+      VersioningConfiguration:
+        Status: Enabled
+
+  CodePipelineArtifactStoreS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CodePipelineArtifactStoreS3Bucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: DenyUnEncryptedObjectUploads
+            Effect: Deny
+            Principal: "*"
+            Action: s3:PutObject
+            Resource:
+              !Join ["", [!GetAtt CodePipelineArtifactStoreS3Bucket.Arn, "/*"]]
+            Condition:
+              StringNotEquals:
+                s3:x-amz-server-side-encryption: aws:kms
+          - Sid: DenyInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              !Join ["", [!GetAtt CodePipelineArtifactStoreS3Bucket.Arn, "/*"]]
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  CodePipelineServiceRole:
+    Type: "AWS::IAM::Role"
+    DependsOn: CodeDeployServiceRole
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: CodeDeployLogPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:PutRetentionPolicy
+                  - logs:DeleteLogGroup
+                Effect: Allow
+                Resource: "*"
+        - PolicyName: CodeDeployPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - "codedeploy:CreateDeployment"
+                  - "codedeploy:GetApplication"
+                  - "codedeploy:GetApplicationRevision"
+                  - "codedeploy:GetDeployment"
+                  - "codedeploy:GetDeploymentConfig"
+                  - "codedeploy:RegisterApplicationRevision"
+                Effect: Allow
+                Resource: "*"
+        - PolicyName: S3Permissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - "s3:PutObject"
+                  - "s3:GetObjectAcl"
+                  - "s3:GetObject"
+                  - "s3:ListBucket"
+                  - "s3:GetBucketVersioning"
+                  - "s3:GetBucketAcl"
+                  - "s3:GetBucketLocation"
+                Effect: Allow
+                Resource: !GetAtt CodePipelineArtifactStoreS3Bucket.Arn
+              - Action:
+                  - "s3:PutObject"
+                  - "s3:ListBucket"
+                  - "s3:GetObjectAcl"
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                Effect: Allow
+                Resource: !Join ["", [!GetAtt CodePipelineArtifactStoreS3Bucket.Arn, "/*"]]
+        - PolicyName: GithubConnectionPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - codestar-connections:UseConnection
+                  - codeconnections:UseConnection
+                Effect: Allow
+                Resource: !Ref GithubConnection
+        - PolicyName: CodeBuildPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuildBatches
+                  - codebuild:StartBuildBatch
+                Effect: Allow
+                Resource: "*"
+        - PolicyName: CloudFormationDeployPermissions
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - cloudformation:DeleteStack
+                  - cloudformation:UpdateStack
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStackResource
+                  - cloudformation:CreateStack
+                  - cloudformation:GetTemplate
+                  - cloudformation:SetStackPolicy
+                Effect: Allow
+                Resource: !Sub "arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${WerewolfResourceStack}/*"
+              # this action does not support resource-level permissions
+              - Action: cloudformation:ValidateTemplate
+                Effect: Allow
+                Resource: "*"
+        # the pipeline hands this role to cloudformation
+        - PolicyName: PassCloudFormationRole
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action: iam:PassRole
+                Effect: Allow
+                Resource: !GetAtt CFNForCodePipelineRole.Arn
+                Condition:
+                  StringEqualsIfExists:
+                    iam:PassedToService: cloudformation.amazonaws.com
+
+  CFNForCodePipelineRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "cloudformation.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: CFNOverallPolicyForStackDeploy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - "iam:*"
+                  - "ec2:*"
+                  - "lambda:*"
+                  - "s3:*"
+                  - "logs:*"
+                  - "scheduler:*"
+                  - "vpc:*"
+                  - "dynamodb:*"
+                  - "sqs:*"
+                  - "kms:*"
+                  - "ssm:*"
+                Effect: Allow
+                Resource: "*"
+
+  WerewolfCodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Type: S3
+        Location: !Ref CodePipelineArtifactStoreS3Bucket
+      Name: !Join
+        - "-"
+        - - !Ref WerewolfCodePipelineName
+          - !Ref AWS::AccountId
+          - !Ref AWS::Region
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: "1"
+                Provider: CodeStarSourceConnection
+              OutputArtifacts:
+                - Name: SourceArtifact
+              Configuration:
+                ConnectionArn: !Ref GithubConnection
+                FullRepositoryId: !Ref GithubFullRepositoryId
+                BranchName: !Ref BranchName
+                OutputArtifactFormat: CODE_ZIP
+                DetectChanges: "true"
+
+        - Name: WerewolfUpdateResourceStack
+          Actions:
+            - Name:  !Join
+              - "-"
+              - - WerewolfUpdateResourceStack
+                - !Ref AWS::AccountId
+                - !Ref AWS::Region
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: "1"
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                Capabilities: CAPABILITY_NAMED_IAM
+                RoleArn: !GetAtt [CFNForCodePipelineRole, Arn]
+                OutputFileName: werewolf-resource-stack.json
+                StackName: !Ref WerewolfResourceStack
+                TemplateConfiguration:
+                  !Join [
+                    "::",
+                    ["SourceArtifact", !Ref WerewolfResourceStackParameterFilePath],
+                  ]
+                TemplatePath:
+                  !Join [
+                    "::",
+                    ["SourceArtifact", !Ref WerewolfResourceTemplateFilePath],
+                  ]
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: UpdateResourceStackArtifact
+              RunOrder: "1"
+
+        - Name: BuildWerewolfBinary
+          Actions:
+            - Name: BuildWerewolfBinary
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName: !Ref WerewolfBuildProject
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: WerewolfBuildArtifact
+
+        - Name: DeployEC2WerewolfApplication
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: "1"
+                Provider: CodeDeploy
+              Configuration:
+                ApplicationName: !Ref CodeDeployWerewolfApplication
+                DeploymentGroupName: !Ref WerewolfDeploymentGroup
+              InputArtifacts:
+                - Name: WerewolfBuildArtifact
+
+
+        # - Name: AcceptanceTest
+        #   Actions:
+        #     - Name: AcceptanceTest
+        #       ActionTypeId:
+        #         Category: Build
+        #         Owner: AWS
+        #         Provider: CodeBuild
+        #         Version: "1"
+        #       Configuration:
+        #         ProjectName: !Ref ProjectName
+        #       InputArtifacts:
+        #         - Name: WerewolfBuildArtifact
+        #       OutputArtifacts:
+        #         - Name: AcceptanceTestArtifact
+
+  CodeDeployServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codedeploy.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
+
+  CodeDeployWerewolfApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: !Ref WerewolfCodeDeployApplicationName
+      ComputePlatform: Server
+
+  # Instances are picked by the tag set in WerewolfResourceTemplate (project=<ProjectName>)
+  WerewolfDeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      ApplicationName: !Ref CodeDeployWerewolfApplication
+      DeploymentGroupName: WerewolfDeploymentGroup
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      DeploymentStyle:
+        DeploymentOption: WITHOUT_TRAFFIC_CONTROL
+        DeploymentType: IN_PLACE
+      Ec2TagSet:
+        Ec2TagSetList:
+          - Ec2TagGroup:
+              - Key: Project
+                Value: !Ref ProjectName
+                Type: KEY_AND_VALUE
+          - Ec2TagGroup:
+              - Key: Purpose
+                Value: !Ref EC2PurposeTagValue
+                Type: KEY_AND_VALUE
+      ServiceRoleArn: !GetAtt CodeDeployServiceRole.Arn
+
+  WerewolfBuildProject:
+    DependsOn:
+      - CodeBuildPolicy
+      - CodeBuildRole
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${ProjectName}-build-binary"
+      Description: Compiles the werewolf go binary and packages it with appspec for CodeDeploy
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Ref WerewolfBuildSpecPath
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+          - Name: GO_MODULE_DIR
+            Value: !Ref GoModuleDir
+          - Name: GO_MAIN_PACKAGE
+            Value: !Ref GoMainPackage
+          - Name: GOARCH
+            Value: !Ref GoArch
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+
+  CodeBuildPolicy:
+    DependsOn:
+      - CodeBuildRole
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - logs:PutRetentionPolicy
+              - logs:DeleteLogGroup
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - ec2:Describe*
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:GetObjectVersion
+            Effect: Allow
+            Resource:
+              - !Join
+                - ""
+                - - "arn:aws:s3:::"
+                  - !Ref "CodePipelineArtifactStoreS3Bucket"
+              - !Join
+                - ""
+                - - "arn:aws:s3:::"
+                  - !Ref "CodePipelineArtifactStoreS3Bucket"
+                  - /*
+          - Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+              - kms:DescribeKey
+            Effect: Allow
+            Resource: "*"
+      PolicyName: !Join
+        - "-"
+        - - !Ref "AWS::StackName"
+          - CodeBuildPolicy2
+      Roles:
+        - !Ref "CodeBuildRole"
+    Type: AWS::IAM::Policy
+
+  CodeBuildRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+      Path: /
+      RoleName: !Join
+        - "-"
+        - - !Ref "AWS::StackName"
+          - CodeBuild
+    Type: AWS::IAM::Role
+
+Outputs:
+  WerewolfCodePipelineName:
+    Description: Name of the codepipeline, used by make runpipe
+    Value: !Ref WerewolfCodePipeline
+  GithubConnectionArn:
+    Description: GitHub connection; it stays PENDING until it is authorized once in the console
+    Value: !Ref GithubConnection
+

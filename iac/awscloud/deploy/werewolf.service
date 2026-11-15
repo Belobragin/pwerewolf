@@ -1,0 +1,17 @@
+[Unit]
+Description=Werewolf control panel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ec2-user
+# Written by scripts/before_install.sh from the SSM parameters of the resource stack
+EnvironmentFile=/etc/werewolf/werewolf.env
+ExecStart=/opt/werewolf/bin/werewolf
+StandardOutput=append:/var/log/app/werewolf.log
+StandardError=inherit
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

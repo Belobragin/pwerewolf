@@ -1,0 +1,1201 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "API documentation",
+        "title": "werwolf service API",
+        "contact": {
+            "name": "bvv",
+            "url": "http://www.swagger.io/support",
+            "email": "vblvbl133@gmail.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "0.0.1"
+    },
+    "host": "localhost:8101",
+    "basePath": "/api/v1",
+    "paths": {
+        "/werewolf/alter/{objectID}": {
+            "get": {
+                "description": "Get adversary image data from the database",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "alter"
+                ],
+                "summary": "Get adversary image data from the database",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "object_id",
+                        "name": "objectID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterGetReply"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterGetErr"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterGetErr"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterGetErr"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Cast adversary image from the image with the selected algorythm",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "alter"
+                ],
+                "summary": "Cast adversary image from the image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "object_id",
+                        "name": "objectID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "input alter data",
+                        "name": "InputAlter",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.InputAlter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterPostReply"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterPostErr"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterPostErr"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterGetErr"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterPostErr"
+                        }
+                    }
+                }
+            }
+        },
+        "/werewolf/diagnose": {
+            "post": {
+                "description": "Classify image by image name and folder with ResNet50 neural net",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "diagnose"
+                ],
+                "summary": "Classify image with ResNet50 neural net",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "image name of the file",
+                        "name": "image_name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "storage folder with the file",
+                        "name": "folder",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnosePostReply"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnosePostErr"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnosePostErr"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnosePostErr"
+                        }
+                    }
+                }
+            }
+        },
+        "/werewolf/diagnose/{objectID}": {
+            "get": {
+                "description": "Get object classification result from the database",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "diagnose"
+                ],
+                "summary": "Get classification result from the database",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "object_id",
+                        "name": "objectID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnoseGetReply"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnoseGetErr"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnoseGetErr"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnoseGetErr"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Classify image by image id (uuid) with ResNet50 neural net",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "diagnose"
+                ],
+                "summary": "Classify image with ResNet50 neural net",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "object_id",
+                        "name": "objectID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnosePostReply"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnosePostErr"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnosePostErr"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnosePostErr"
+                        }
+                    }
+                }
+            }
+        },
+        "/werewolf/list": {
+            "get": {
+                "description": "List images, adversarial images and filter images based on 'AND' logic",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "list"
+                ],
+                "summary": "List images",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "adversarial_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "adversarial_object_uuid",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "algorythm",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "alter_goal",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "filter_object_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "filter_object_uuid",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "image_name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "image_uuid",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_list_model.ListImageReply"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_list_model.ListImageErr"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_list_model.ListImageErr"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_list_model.ListImageErr"
+                        }
+                    }
+                }
+            }
+        },
+        "/werewolf/picture/download/{objectID}": {
+            "post": {
+                "description": "Download initial, adversarial or filter picture to local file in $PROJECTFOLDER/download folder",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "picture"
+                ],
+                "summary": "Download object to local file in $PROJECTFOLDER/download folder",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "object_id",
+                        "name": "objectID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.DownloadObjectReply"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.DownloadObjectErr"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.DownloadObjectErr"
+                        }
+                    },
+                    "406": {
+                        "description": "Not Acceptable",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.DownloadObjectErr"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.DownloadObjectErr"
+                        }
+                    }
+                }
+            }
+        },
+        "/werewolf/picture/upload": {
+            "post": {
+                "description": "Upload image file for next adversarial transformation or for diagnosing to the storage and make database record",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "picture"
+                ],
+                "summary": "Upload image to the storage and make database record",
+                "parameters": [
+                    {
+                        "description": "input upload image data",
+                        "name": "UploadImage",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.UploadImage"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.UploadReply"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.UploadErr"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.UploadErr"
+                        }
+                    },
+                    "406": {
+                        "description": "Not Acceptable",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.UploadErr"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.UploadErr"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.UploadErr"
+                        }
+                    }
+                }
+            }
+        },
+        "/werewolf/picture/{objectID}": {
+            "delete": {
+                "description": "Delete object (initial/adversarial image or filter) in storage and wipe out data from database",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "picture"
+                ],
+                "summary": "Delete object in storage and wipe out data from database",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "object_id",
+                        "name": "objectID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.DeleteObjectReply"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.DeleteObjectErr"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.DeleteObjectErr"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.DeleteObjectErr"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.DeleteObjectErr"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterGetErr": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "err_message": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "not found"
+                },
+                "object_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterGetOneReply": {
+            "type": "object",
+            "properties": {
+                "adversarial_object_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "adversarial_object_name": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "/adversarial_image/dog-115_adv.img"
+                },
+                "algorythm": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "biterate_targeted"
+                },
+                "alter_goal": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "tiger_shark"
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "filter_name": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "/filter_image/dog-115_filter.img"
+                },
+                "filter_object_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "image_uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterGetReply": {
+            "type": "object",
+            "properties": {
+                "alter_all_reply": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterGetOneReply"
+                    }
+                },
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterPostErr": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "err_message": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "not found"
+                },
+                "object_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_alter_model.AlterPostReply": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 200
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "ml_request": {
+                    "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_alter_model.MLMessageRequest"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_alter_model.InputAlter": {
+            "type": "object",
+            "properties": {
+                "algorythm": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "biterate_targeted"
+                },
+                "alter_goal": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "tiger_shark"
+                },
+                "with_filter": {
+                    "type": "boolean",
+                    "format": "bool",
+                    "example": false
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_alter_model.MLMessageRequest": {
+            "type": "object",
+            "properties": {
+                "algorythm": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "biterate_targeted"
+                },
+                "alter_goal": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "tiger_shark"
+                },
+                "input_image_name": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "hog-test.jpg"
+                },
+                "order_id": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "save_filter": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "1"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DbResultReply": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2026-08-28T14:11:51.213+0300"
+                },
+                "prediction": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.ResnetPredictionData"
+                        }
+                    }
+                },
+                "updated_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2026-08-28T14:13:51.213+0300"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnoseGetErr": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "err_message": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "not found"
+                },
+                "image_uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnoseGetReply": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 200
+                },
+                "image_name": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "hog.jpg"
+                },
+                "image_uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "result_reply": {
+                    "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DbResultReply"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnosePostErr": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "err_message": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "not found"
+                },
+                "image_uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.DiagnosePostReply": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 200
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2026-08-28T14:11:51.213+0300"
+                },
+                "image_uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "resnet_reply": {
+                    "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.ResnetReply"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.ResnetPredictionData": {
+            "type": "object",
+            "properties": {
+                "class_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 342
+                },
+                "class_label": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "n02396427"
+                },
+                "class_name": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "wild_boar"
+                },
+                "probability": {
+                    "type": "number",
+                    "format": "float32",
+                    "example": 82.28
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.ResnetReply": {
+            "type": "object",
+            "properties": {
+                "image_name": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "hog.jpg"
+                },
+                "predict": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_diagnose_model.ResnetPredictionData"
+                        }
+                    }
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_list_model.ListImageErr": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "err_message": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "not found"
+                },
+                "picture_filter": {
+                    "type": "string",
+                    "format": "string"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_list_model.ListImageReply": {
+            "type": "object",
+            "properties": {
+                "all_image": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_list_model.OneImageReply"
+                    }
+                },
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_list_model.OneImageReply": {
+            "type": "object",
+            "properties": {
+                "adversarial_name": {
+                    "type": "string"
+                },
+                "adversarial_object_uuid": {
+                    "type": "string"
+                },
+                "algorythm": {
+                    "type": "string"
+                },
+                "alter_goal": {
+                    "type": "string"
+                },
+                "filter_object_name": {
+                    "type": "string"
+                },
+                "filter_object_uuid": {
+                    "type": "string"
+                },
+                "image_name": {
+                    "type": "string"
+                },
+                "image_uuid": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_picture_model.DeleteObjectErr": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "err_message": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "not found"
+                },
+                "object_id": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_picture_model.DeleteObjectReply": {
+            "type": "object",
+            "properties": {
+                "all_object": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_model_picture_model.ObjectKind"
+                    }
+                },
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 200
+                },
+                "deleted_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2026-08-29T14:11:51.213+0300"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_picture_model.DownloadObjectErr": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "err_message": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "not found"
+                },
+                "object_id": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_picture_model.DownloadObjectReply": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 200
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2026-08-28T14:11:51.213+0300"
+                },
+                "if_adversarial": {
+                    "type": "boolean",
+                    "format": "bool",
+                    "example": true
+                },
+                "if_filter": {
+                    "type": "boolean",
+                    "format": "bool",
+                    "example": true
+                },
+                "if_image": {
+                    "type": "boolean",
+                    "format": "bool",
+                    "example": true
+                },
+                "object_id": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "object_name": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "dog-115_filter.img"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_picture_model.ObjectKind": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2026-08-28T14:11:51.213+0300"
+                },
+                "object_id": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440111"
+                },
+                "object_kind": {
+                    "format": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_belobragin_werewolf_bus_pkg_storage.ObjectKind"
+                        }
+                    ],
+                    "example": "adversarial"
+                },
+                "object_name": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "hog-test_adversarial_biterate_targeted.jpg"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_picture_model.UploadErr": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "err_message": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "not found"
+                },
+                "file_path": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "/home/user/images/werewolf/dog-115.img"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_picture_model.UploadImage": {
+            "type": "object",
+            "properties": {
+                "file_description": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "test image with the dog"
+                },
+                "file_path": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "test-image/dog-115.img"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_model_picture_model.UploadReply": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "2023-08-28T14:11:51.213+0300"
+                },
+                "image_description": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "test image with the dog"
+                },
+                "image_height": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 600
+                },
+                "image_name": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "dog-115.img"
+                },
+                "image_size": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "64Kb"
+                },
+                "image_uuid": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "image_width": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 400
+                },
+                "mime_type": {
+                    "type": "string",
+                    "format": "string",
+                    "example": "image/jpeg"
+                }
+            }
+        },
+        "github_com_belobragin_werewolf_bus_pkg_storage.ObjectKind": {
+            "type": "string",
+            "enum": [
+                "image",
+                "adversarial",
+                "filter"
+            ],
+            "x-enum-varnames": [
+                "KindImage",
+                "KindAdversarial",
+                "KindFilter"
+            ]
+        }
+    }
+}

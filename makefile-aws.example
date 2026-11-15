@@ -1,0 +1,59 @@
+SHELL=/bin/bash
+
+include .env.local
+
+EC2_EXTERNAL_IP=
+PATH_TO_AWS_KEY=
+
+.PHONY: setcfresource 
+setcfresource:	## create Werewolf project resources with CFN. This command is run only once
+## 
+	@source .env.awscloud && \
+	aws cloudformation create-stack \
+	--stack-name $$AWS_RESOURCE_CFN_STACK_NAME \
+	--template-body file://iac/awscloud/template/WerewolfResourceTemplate.yaml \
+	--parameters file://iac/awscloud/parameter/werewolf_resource_parameter.json \
+	--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+.PHONY: startinstance
+startinstance:	## start the EC2 instance of the Werewolf resource stack and wait until it is running
+	@source .env.awscloud && \
+	python3 iac/awscloud/script/start_instance.py "$$AWS_RESOURCE_CFN_STACK_NAME"
+
+
+.PHONY: updcfresource
+updcfresource: startinstance	## update Werewolf project resource with CFN; the instance is started first
+## 
+	@source .env.awscloud && \
+	aws cloudformation update-stack \
+	--stack-name $$AWS_RESOURCE_CFN_STACK_NAME \
+	--template-body file://iac/awscloud/template/WerewolfResourceTemplate.yaml \
+	--parameters file://iac/awscloud/parameter/werewolf_resource_parameter.json \
+	--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+
+.PHONY: setpipeline
+setpipeline:	## create or update the werewolf codepipeline; it then starts by itself after each push to the github main branch
+	@source .env.awscloud && \
+	aws cloudformation deploy \
+	--stack-name "$${AWS_PIPELINE_CFN_STACK_NAME:-werewolf-bvv-cf-pipeline}" \
+	--template-file iac/awscloud/template/WerewolfPipelineTemplate.yml \
+	--parameter-overrides WerewolfResourceStack="$$AWS_RESOURCE_CFN_STACK_NAME" BranchName=main \
+	--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM && \
+	echo "first time only: authorize the GitHub connection in the console (Developer Tools > Settings > Connections), then run make runpipe"
+
+
+.PHONY: tunel 
+tunel:	## make ssh tunnel from the local machine to the aws control panel
+	@source .env.awscloud && \
+	ssh -i $(PATH_TO_AWS_KEY) -N \
+ 	-o ExitOnForwardFailure=yes -o ServerAliveInterval=30 \
+  	-L $(API_REST_PORT):localhost:$(API_REST_PORT) ec2-user@$(EC2_EXTERNAL_IP)
+
+.PHONY: runpipe 
+runpipe:	## start the codepipeline manually; it also starts by itself after each push to main
+	@source .env.awscloud && \
+	pipeline=$$(aws cloudformation describe-stacks --stack-name "$${AWS_PIPELINE_CFN_STACK_NAME:-werewolf-bvv-cf-pipeline}" \
+		--query "Stacks[0].Outputs[?OutputKey=='WerewolfCodePipelineName'].OutputValue" --output text) && \
+	test -n "$$pipeline" && [ "$$pipeline" != None ] || { echo "pipeline not found in stack outputs, run make setpipeline"; exit 1; } && \
+	aws codepipeline start-pipeline-execution --name "$$pipeline"

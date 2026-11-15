@@ -1,0 +1,79 @@
+SHELL=/bin/bash
+
+include .env.local
+include makefile-aws
+
+LOCAL_EXECUTE="cmd/local/main.go"
+CLOUD_EXECUTE="cmd/cloud/main.go"
+HANDLER_NOTATIONS="/app/*"
+EXEC_NOTATION="/cmd/local/main.go"
+
+
+SWAG_OPTS = -q --parseDependency \
+	--parseDepth 5 \
+	--exclude infov \
+	--outputTypes go,json \
+	--generatedTime \
+	--generalInfo $(GOFOLDER)/$(LOCAL_EXECUTE) \
+	--output $(GOFOLDER)/$(SWAG_OUTDIR)
+
+## ----------------------------------------------------------------------
+## This is a help comment. The purpose of this Makefile is to process 
+## pet project werewolf (control panel api server).
+## Help comments are displayed in the order defined within the Makefile
+## All comands are initiated with make (command) if not stated otherwise
+## ----------------------------------------------------------------------
+
+help:	## Show this help.
+	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
+
+
+.PHONY: test
+test:	## all tests
+	@cd $(GOFOLDER) && go test ./...
+
+
+.PHONY: lrun
+lrun:	## run with local resources and local configuration
+	@source .env.local && cd $(GOFOLDER) &&\
+	go run $(LOCAL_EXECUTE)
+
+
+.PHONY: lcrun
+lcrun:	## run locally with cloud resources
+	@source .env.awscloud && cd $(GOFOLDER) &&\
+	go run $(CLOUD_EXECUTE)
+
+
+.PHONY: natslog
+natslog: ## check nats logs
+	@docker compose \
+		--env-file .env.local \
+		-f ./iac/local/nats-docker-compose.yaml logs nats | grep -i jetstream
+
+
+.PHONY: natsstart
+natsstart: ## start nats server in container with config
+	@docker compose \
+		--env-file .env.local \
+		-f iac/local/nats-docker-compose.yaml \
+		up -d
+
+
+.PHONY: natsstop
+natsstop: ## stop nats server container with config
+	@docker-compose -f ./iac/local/nats-docker-compose.yaml down
+
+
+.PHONY: limigrate
+limigrate: ## local initial migrations; this command is run only once
+	@export GOOSE_MIGRATION_DIR=psql-migrate/local && \
+	goose postgres $(DBCONNSTRING) up
+
+
+.PHONY: swaglocal
+swaglocal: ## generate swagger documentation for local version
+	@mkdir -p $(GOFOLDER)/$(SWAG_OUTDIR) && \
+	swag init $(SWAG_OPTS) && \
+	sed -i -e 's,github.com/swaggo/swag,github.com/swaggo/swag/v2,' $(GOFOLDER)/$(SWAG_OUTDIR)/docs.go
+

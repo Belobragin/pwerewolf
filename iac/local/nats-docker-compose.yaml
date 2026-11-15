@@ -1,0 +1,42 @@
+# nats-secure.conf - Production security configuration
+
+# docker-compose.yml
+version: '3.8'
+
+services:
+  nats:
+    # Use the alpine variant so the in-container wget healthcheck works.
+    # The default scratch-based image has no shell or wget.
+    image: nats:alpine
+    container_name: nats
+    ports:
+      - "4222:4222"   # Client connections
+      - "8222:8222"   # HTTP monitoring
+    environment:
+      NATS_WEREWOLF_USER: ${NATS_WEREWOLF_USER}
+      NATS_WEREWOLF_PSW: ${NATS_WEREWOLF_PSW}
+      NATS_AKER_USER: ${NATS_AKER_USER}
+      NATS_AKER_PSW: ${NATS_AKER_PSW}
+    volumes:
+      # Mount configuration file as read-only
+      - ./nats-secure.conf:/etc/nats/nats.conf:ro
+      # Named volume for JetStream data persistence
+      - nats-data:/data
+    command: ["-c", "/etc/nats/nats.conf"]
+    # Health check to verify NATS is responding
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz"]
+      interval: 20s
+      timeout: 8s
+      retries: 3
+    networks:
+      - nats-network
+    restart: unless-stopped
+
+volumes:
+  nats-data:
+    driver: local
+
+networks:
+  nats-network:
+    driver: bridge

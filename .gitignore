@@ -1,0 +1,72 @@
+## Python-generated files
+**/__pycache__/
+**/.ipynb*
+**/*.py[oc]
+**/__py*
+**/*.swp
+.pytest_cache
+build/
+dist/
+wheels/
+**/*.egg-info
+**/ptxas
+rm_mess.sh
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+## Virtual environments
+**/.venv
+**/.venv*
+**/venv
+
+## temporary content
+temp
+tmp
+
+## Caches
+**/.cache
+**/.keras/
+**/.ipynb_checkpoints/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+## makefile
+makefile
+Makefile
+makefile*
+Makefile*
+!Makefile.example
+!makefile.example
+!makefile-*.example
+!Makefile-*.example
+
+## Local environment / runtime
+.env
+.env*
+!.env.*.example
+!.env.example
+.server.pid
+go.work*
+
+## test keys:
+**/key
+**/keys
+**/*_rsa
+**/*.pem
+all-test-key
+
+## testing
+test-*
+
+## local storage && local downloads
+download
+local-storage
+
+## go local development
+**/go.local.*
+
+## vendor folders
+**/vendor

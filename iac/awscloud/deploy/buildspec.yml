@@ -1,0 +1,35 @@
+version: 0.2
+
+env:
+  variables:
+    CGO_ENABLED: "0"
+    # go.mod pins the exact toolchain; let go download it if the image's go is older
+    GOTOOLCHAIN: auto
+
+phases:
+  install:
+    runtime-versions:
+      golang: 1.22
+  pre_build:
+    commands:
+      # DB and AWS tests skip themselves when their env is not set; a failure here stops the pipeline
+      - cd "$CODEBUILD_SRC_DIR/$GO_MODULE_DIR"
+      - go test -count=1 ./...
+  build:
+    commands:
+      - OUT="$CODEBUILD_SRC_DIR/out"
+      - mkdir -p "$OUT/bin"
+      - cd "$CODEBUILD_SRC_DIR/$GO_MODULE_DIR"
+      - GOOS=linux GOARCH="$GOARCH" go build -trimpath -ldflags "-s -w" -o "$OUT/bin/werewolf" "$GO_MAIN_PACKAGE"
+  post_build:
+    commands:
+      - cd "$CODEBUILD_SRC_DIR"
+      - cp iac/awscloud/deploy/appspec.yml "$OUT/appspec.yml"
+      - cp -r iac/awscloud/deploy/scripts "$OUT/scripts"
+      - chmod +x "$OUT"/scripts/*.sh
+      - cp iac/awscloud/deploy/werewolf.service "$OUT/werewolf.service"
+
+artifacts:
+  base-directory: out
+  files:
+    - "**/*"
