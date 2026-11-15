@@ -38,7 +38,7 @@ setpipeline:	## create or update the werewolf codepipeline; it then starts by it
 	aws cloudformation deploy \
 	--stack-name "$${AWS_PIPELINE_CFN_STACK_NAME:-werewolf-bvv-cf-pipeline}" \
 	--template-file iac/awscloud/template/WerewolfPipelineTemplate.yml \
-	--parameter-overrides WerewolfResourceStack="$$AWS_RESOURCE_CFN_STACK_NAME" BranchName=main \
+	--parameter-overrides WerewolfResourceStack="$$AWS_RESOURCE_CFN_STACK_NAME" BranchName=main GithubFullRepositoryId=Belobragin/pwerewolf\
 	--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM && \
 	echo "first time only: authorize the GitHub connection in the console (Developer Tools > Settings > Connections), then run make runpipe"
 

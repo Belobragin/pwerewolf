@@ -80,7 +80,7 @@ put your values for the environment variables in the file `.env.local.example` a
 If you decide to try this project in the aws cloud, follow next steps:
 1. fill in the values for the cloud environment variables in the file `.env.awscloud.example` and save it as `.env.awscloud`.
 2. run `make setcfresource`. Your aws credentials must be locally exported and allow the creation of all resources in the `iac/awscloud/template/WerewolfResourceTemplate.yaml` template
-3. after stack is created, get ec2 external IP and put it to the variable `EC2_EXTERNAL_IP`, put the path to the private key for ec2 access to the variable `PATH_TO_AWS_KEY` in the `makefile-aws`, then in the seperate terminal window run `make tunnel`
+3. after stack is created, get ec2 external IP and put it to the variable `EC2_EXTERNAL_IP`, put the path to the private key for ec2 access to the variable `PATH_TO_AWS_KEY` in the `makefile-aws`, then in the seperate terminal window run `make tunnel`. Also put key name to the "Keyname" value at `iac/awscloud/parameter/werewolf_resource_pipeline_parameter.json`
 4. in the browser window go to the page `localhost:8101/api/v1/werewolf/docs/swagger` and use swagger api UI
 5. recommendations: do not forget to stop ec2 instance in the stack after you finish working with api. Or just delete the whole stack. 
  
